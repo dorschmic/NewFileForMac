@@ -1,0 +1,83 @@
+# XcodeGen-Projektbeschreibung. Das .xcodeproj wird daraus erzeugt:
+#   xcodegen generate
+# (Das .xcodeproj also nicht von Hand pflegen, sondern diese Datei ändern.)
+name: NewFileForMac
+
+options:
+  bundleIdPrefix: de.micheldorsch
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # Lokal signieren mit dem eigenen "Apple Development"-Zertifikat.
+    # Ohne Provisioning-Profil – reicht, solange keine eingeschränkten
+    # Entitlements (z. B. App Groups) verwendet werden.
+    DEVELOPMENT_TEAM: XZJ9B85F3K
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "Apple Development"
+    PROVISIONING_PROFILE_SPECIFIER: ""
+    ENABLE_HARDENED_RUNTIME: NO
+
+targets:
+  # Haupt-App: Menüleisten-App ohne Sandbox. Nimmt Aufträge per URL-Schema
+  # (newfileformac://job?data=…) entgegen und führt sie aus.
+  NewFileForMac:
+    type: application
+    platform: macOS
+    sources:
+      - App
+      - Shared
+      - path: Resources/Templates
+        type: folder          # Ordner-Referenz: wird 1:1 ins Bundle kopiert
+        buildPhase: resources
+      - path: Resources/conversions.json
+        buildPhase: resources
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: NewFileForMac
+        LSUIElement: true     # kein Dock-Icon, nur Menüleiste
+        CFBundleURLTypes:
+          - CFBundleURLName: de.micheldorsch.NewFileForMac.job
+            CFBundleURLSchemes: [newfileformac]
+    entitlements:
+      path: App/NewFileForMac.entitlements
+      properties:
+        com.apple.security.app-sandbox: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.micheldorsch.NewFileForMac
+    dependencies:
+      - target: FinderExtension   # wird nach Contents/PlugIns eingebettet
+
+  # Finder Sync Extension: muss in der Sandbox laufen. Baut nur die Menüs
+  # und schickt Aufträge an die Haupt-App.
+  FinderExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - FinderExtension
+      - Shared
+    info:
+      path: FinderExtension/Info.plist
+      properties:
+        CFBundleDisplayName: NewFileForMac
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.FinderSync
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync
+    entitlements:
+      path: FinderExtension/FinderExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        # Ausnahme für den Eigengebrauch: Die Extension darf Vorlagen und
+        # Regeln aus ~/Library/Application Support/NewFileForMac/ lesen.
+        com.apple.security.temporary-exception.files.home-relative-path.read-only:
+          - /Library/Application Support/NewFileForMac/
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.micheldorsch.NewFileForMac.FinderExtension

@@ -73,19 +73,39 @@ class FinderSync: FIFinderSync {
 
     private func addConvertMenu(to menu: NSMenu) {
         let files = selectedFiles()
-        guard !files.isEmpty, let config = loadRules() else { return }
-        let outputs = config.commonOutputs(for: files)
+        guard !files.isEmpty else { return }
+        let outputs = loadRules().commonOutputs(for: files)
         guard !outputs.isEmpty else { return }
 
+        // Einträge ohne "group" oben direkt ins Menü, darunter die Untermenüs
+        // (in der Reihenfolge, in der die Gruppe zum ersten Mal vorkommt).
         let submenu = NSMenu(title: "Konvertieren")
+        var groupMenus: [String: NSMenu] = [:]
+        var groupItems: [NSMenuItem] = []
         for (index, output) in outputs.enumerated() {
             let item = NSMenuItem(title: output.label,
                                   action: #selector(convertClicked(_:)),
                                   keyEquivalent: "")
             item.tag = Tag.convert + index
             item.image = icon(forExtension: output.ext)
-            submenu.addItem(item)
+
+            guard let group = output.group else {
+                submenu.addItem(item)
+                continue
+            }
+            if groupMenus[group] == nil {
+                let groupMenu = NSMenu(title: group)
+                let groupItem = NSMenuItem(title: group, action: nil, keyEquivalent: "")
+                groupItem.submenu = groupMenu
+                groupItems.append(groupItem)
+                groupMenus[group] = groupMenu
+            }
+            groupMenus[group]?.addItem(item)
         }
+        if !groupItems.isEmpty && submenu.numberOfItems > 0 {
+            submenu.addItem(.separator())
+        }
+        groupItems.forEach(submenu.addItem)
         let title = files.count == 1 ? "Konvertieren in" : "\(files.count) Dateien konvertieren in"
         let parent = NSMenuItem(title: title, action: nil, keyEquivalent: "")
         parent.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: nil)
@@ -112,8 +132,7 @@ class FinderSync: FIFinderSync {
 
     @objc private func convertClicked(_ sender: NSMenuItem) {
         let files = selectedFiles()
-        guard let config = loadRules() else { return }
-        let outputs = config.commonOutputs(for: files)
+        let outputs = loadRules().commonOutputs(for: files)
         let index = sender.tag - Tag.convert
         guard outputs.indices.contains(index) else { return }
         send(.convert(files: files.map(\.path), targetExtension: outputs[index].ext))
@@ -134,10 +153,9 @@ class FinderSync: FIFinderSync {
         }
     }
 
-    private func loadRules() -> ConversionConfig? {
-        do { return try ConversionConfig.load() } catch {
-            log.error("conversions.json nicht lesbar: \(error.localizedDescription)")
-            return nil
+    private func loadRules() -> ConversionConfig {
+        ConversionConfig.loadMerged { [log] error in
+            log.error("Eigene Regeln (conversions.json) fehlerhaft: \(String(describing: error), privacy: .public)")
         }
     }
 

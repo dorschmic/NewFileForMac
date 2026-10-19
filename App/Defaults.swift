@@ -7,6 +7,16 @@ enum Defaults {
     private static var bundledTemplates: URL? { Bundle.main.url(forResource: "Templates", withExtension: nil) }
     private static var bundledRules: URL? { Bundle.main.url(forResource: "conversions", withExtension: "json") }
 
+    /// Leere Datei für eigene Regeln.
+    private static let userRulesSkeleton = """
+    {
+      "_comment": "Eigene Regeln – haben Vorrang vor conversions.default.json. Die Standarddatei wird bei jedem App-Start erneuert, Änderungen gehören deshalb hierher. Aufbau und Beispiele: siehe conversions.default.json.",
+      "rules": [
+      ]
+    }
+
+    """
+
     static func installIfNeeded() {
         try? fm.createDirectory(at: AppPaths.supportDir, withIntermediateDirectories: true)
         // Vorlagen nur beim allerersten Start kopieren – sonst kämen
@@ -14,9 +24,7 @@ enum Defaults {
         if !fm.fileExists(atPath: AppPaths.templatesDir.path) {
             restoreMissingTemplates()
         }
-        if !fm.fileExists(atPath: AppPaths.rulesFile.path), let bundledRules {
-            try? fm.copyItem(at: bundledRules, to: AppPaths.rulesFile)
-        }
+        installRules()
     }
 
     static func restoreMissingTemplates() {
@@ -30,12 +38,27 @@ enum Defaults {
         }
     }
 
-    /// Ersetzt conversions.json durch die Standardversion (alte → .bak).
-    static func resetRules() {
-        guard let bundledRules else { return }
+    /// Standardregeln immer erneuern (so kommen Updates an),
+    /// eigene Regeldatei nur anlegen, wenn sie fehlt.
+    private static func installRules() {
+        if let bundledRules {
+            try? fm.removeItem(at: AppPaths.defaultRulesFile)
+            try? fm.copyItem(at: bundledRules, to: AppPaths.defaultRulesFile)
+        }
+        migrateOldRulesFile()
+        if !fm.fileExists(atPath: AppPaths.rulesFile.path) {
+            try? userRulesSkeleton.write(to: AppPaths.rulesFile, atomically: true, encoding: .utf8)
+        }
+    }
+
+    /// Version 0.1 hat die Standardregeln direkt nach conversions.json kopiert.
+    /// Diese alte Kopie würde die neuen Standardregeln überdecken → zur Seite legen.
+    private static func migrateOldRulesFile() {
+        guard let content = try? String(contentsOf: AppPaths.rulesFile, encoding: .utf8),
+              content.contains("\"_comment\": \"Video → Audio / GIF\"")
+        else { return }
         let backup = AppPaths.rulesFile.appendingPathExtension("bak")
         try? fm.removeItem(at: backup)
         try? fm.moveItem(at: AppPaths.rulesFile, to: backup)
-        try? fm.copyItem(at: bundledRules, to: AppPaths.rulesFile)
     }
 }

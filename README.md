@@ -3,12 +3,17 @@
 Windows-ähnliche Finder-Funktionen per Rechtsklick:
 
 - **Neue Datei** → Text, Markdown, Python, HTML, JSON, CSV, Shell, RTF, Word, Excel, PowerPoint …
-- **Konvertieren in** → je nach Dateityp (Video → MP3/M4A/WAV/GIF/MP4, Bilder → JPEG/PNG/HEIC/TIFF/PDF, Text → DOCX/RTF/HTML, …)
+- **Konvertieren in** → je nach Dateityp, z. B.
+  - Text/Code (`.txt`, `.sh`, `.py`, `.json` …) → TXT, MD, PDF, Word, ODT, RTF, HTML oder einfach andere Endung
+  - Markdown → HTML, Word, ODT, RTF, EPUB, PDF · CSV → Tabelle als Markdown/HTML/Word/PDF
+  - Word/ODT/RTF/HTML → PDF, TXT, Markdown, DOC, EPUB … · PDF → TXT, PNG/JPEG
+  - Bilder (inkl. HEIC, RAW) → JPEG, PNG, HEIC, WebP, AVIF, PDF, TIFF, GIF, BMP, ICO, PSD
+  - Video → MP4, MOV, MKV, WebM, GIF, Audio-Spur, Standbild · Audio → MP3, M4A, WAV, AIFF, FLAC, Opus, OGG
 
 ## Installieren
 
 ```bash
-brew install xcodegen ffmpeg
+brew install xcodegen ffmpeg pandoc webp
 ```
 
 ```bash
@@ -52,20 +57,37 @@ Finder ──Rechtsklick──▶ FinderExtension (Sandbox)
 Alles liegt in `~/Library/Application Support/NewFileForMac/` (Menüleiste → *Vorlagen-Ordner öffnen*):
 
 - **Vorlagen:** einfach Dateien in `Templates/` legen. `15 Notiz.md` erscheint als „Notiz“; die Zahl steuert nur die Reihenfolge. Änderungen wirken sofort beim nächsten Rechtsklick.
-- **Konvertierungen:** `conversions.json` bearbeiten. Eine Regel ordnet Eingabe-Endungen Ausgaben zu, jede Ausgabe nennt Werkzeug und Argumente. Platzhalter: `{input}`, `{output}`, `{outputDir}`, `{name}`. Werkzeuge werden in `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin` gesucht oder über `"tools"` mit Pfad angegeben.
+- **Konvertierungen:**
+  - `conversions.default.json` – mitgelieferte Regeln, werden bei jedem App-Start erneuert (nicht bearbeiten)
+  - `conversions.json` – **eigene Regeln**, haben Vorrang (Menüleiste → *Eigene Konvertierungsregeln bearbeiten*)
 
-Bei Mehrfachauswahl zeigt das Menü nur Formate, die für *alle* ausgewählten Dateien gehen.
+Aufbau einer Regel:
+
+```json
+{ "inputs": ["txt", "md"],
+  "outputs": [
+    { "ext": "pdf", "label": "PDF", "group": "Dokument", "tool": "textpdf" },
+    { "ext": "mp3", "label": "MP3", "tool": "ffmpeg", "args": ["-i", "{input}", "{output}"] },
+    { "ext": "pdf", "label": "PDF", "via": "html" }
+  ] }
+```
+
+| Feld | Bedeutung |
+|---|---|
+| `tool` | Programmname (gesucht in `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin` oder unter `"tools"`) oder eingebautes Werkzeug |
+| `args` | Argumente mit Platzhaltern `{input}`, `{output}`, `{outputDir}`, `{name}` |
+| `group` | Eintrag landet im Untermenü dieses Namens |
+| `via` | erst in dieses Format konvertieren, dann weiter (z. B. Markdown → HTML → PDF) |
+
+Eingebaute Werkzeuge: `copy` (Inhalt bleibt, nur die Endung ändert sich; Skripte werden ausführbar), `textpdf` (Text/Code/RTF/DOCX/HTML als A4-PDF über das macOS-Textsystem), `pdftext` (Text aus PDF).
+
+Gibt es dasselbe Ziel in mehreren Regeln, wird der Reihe nach die erste genommen, deren Werkzeug installiert ist. Beispiel: DOCX → PDF nimmt LibreOffice, falls installiert, sonst `textpdf`. Bei Mehrfachauswahl zeigt das Menü nur Formate, die für *alle* ausgewählten Dateien gehen. `jpg`/`jpeg`, `tif`/`tiff`, `htm`/`html`, `yml`/`yaml` usw. gelten als dasselbe Format.
 
 ## Stand
 
-| Funktion | Werkzeug | Status |
-|---|---|---|
-| Neue Datei (alle Vorlagen) | – | getestet |
-| Video → MP3/M4A/WAV/GIF/MP4, Audio ↔ Audio | ffmpeg | MP3 + GIF getestet |
-| Bilder (HEIC/JPG/PNG/…) | sips | HEIC → JPG getestet |
-| DOCX/RTF/TXT/HTML untereinander | textutil | RTF → DOCX getestet |
-| Markdown → DOCX/HTML | pandoc (`brew install pandoc`) | Regel vorhanden, ungetestet |
-| Office → PDF, PDF → DOCX | LibreOffice (`brew install --cask libreoffice`) | Regel vorhanden, ungetestet |
+Getestet über das URL-Schema: eine Stichprobe von rund 50 Konvertierungen, die jedes Werkzeug (copy, textpdf, textutil, pandoc, sips, cwebp, ffmpeg) abdeckt, mit geprüften Ergebnissen. Nicht jedes Quell-/Zielpaar einzeln getestet, die LibreOffice-Regeln gar nicht.
+
+LibreOffice (`brew install --cask libreoffice`, ca. 1 GB) ist optional. Nötig ist es nur für XLSX/PPTX → PDF, Tabellen ↔ CSV/ODS und PDF → DOCX. Ohne LibreOffice erscheinen diese Einträge trotzdem und melden beim Klick, was zu installieren ist.
 
 ## Debugging
 

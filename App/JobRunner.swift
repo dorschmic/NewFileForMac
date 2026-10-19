@@ -42,10 +42,8 @@ final class JobRunner: ObservableObject {
     // MARK: - Konvertieren
 
     private func convert(_ files: [URL], to targetExtension: String) {
-        let config: ConversionConfig
-        do { config = try ConversionConfig.load() } catch {
-            Notifier.shared.post(title: "conversions.json fehlerhaft", body: "\(error)")
-            return
+        let config = ConversionConfig.loadMerged { error in
+            Notifier.shared.post(title: "Eigene Regeln fehlerhaft (conversions.json)", body: "\(error)")
         }
 
         activeJobs += 1

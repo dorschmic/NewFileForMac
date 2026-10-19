@@ -21,6 +21,9 @@ enum AppPaths {
     /// Vorlagen für "Neue Datei" – jede Datei hier wird zu einem Menüeintrag.
     static let templatesDir = supportDir.appendingPathComponent("Templates", isDirectory: true)
 
-    /// Regeln für "Konvertieren".
+    /// Eigene Konvertierungsregeln (haben Vorrang).
     static let rulesFile = supportDir.appendingPathComponent("conversions.json")
+
+    /// Mitgelieferte Regeln – wird bei jedem App-Start überschrieben.
+    static let defaultRulesFile = supportDir.appendingPathComponent("conversions.default.json")
 }

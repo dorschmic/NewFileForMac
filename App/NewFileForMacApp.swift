@@ -41,15 +41,15 @@ struct MenuContent: View {
         Button("Vorlagen-Ordner öffnen") {
             NSWorkspace.shared.open(AppPaths.templatesDir)
         }
-        Button("Konvertierungsregeln im Finder zeigen") {
-            NSWorkspace.shared.activateFileViewerSelecting([AppPaths.rulesFile])
+        Button("Eigene Konvertierungsregeln bearbeiten") {
+            openInTextEditor(AppPaths.rulesFile)
+        }
+        Button("Standardregeln ansehen") {
+            openInTextEditor(AppPaths.defaultRulesFile)
         }
         Divider()
         Button("Fehlende Standardvorlagen wiederherstellen") {
             Defaults.restoreMissingTemplates()
-        }
-        Button("Regeln auf Standard zurücksetzen") {
-            Defaults.resetRules()
         }
         Divider()
         Button("Finder-Erweiterung verwalten …") {
@@ -67,5 +67,14 @@ struct MenuContent: View {
         Divider()
         Button("Beenden") { NSApp.terminate(nil) }
             .keyboardShortcut("q")
+    }
+
+    /// JSON-Dateien würden sonst evtl. in Xcode aufgehen.
+    private func openInTextEditor(_ file: URL) {
+        guard let textEdit = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.TextEdit") else {
+            NSWorkspace.shared.open(file)
+            return
+        }
+        NSWorkspace.shared.open([file], withApplicationAt: textEdit, configuration: NSWorkspace.OpenConfiguration())
     }
 }

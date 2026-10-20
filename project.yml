@@ -41,6 +41,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: NewFileForMac
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSUIElement: true     # kein Dock-Icon, nur Menüleiste
         CFBundleURLTypes:
           - CFBundleURLName: de.micheldorsch.NewFileForMac.job
@@ -67,6 +69,8 @@ targets:
       path: FinderExtension/Info.plist
       properties:
         CFBundleDisplayName: NewFileForMac
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.FinderSync
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).FinderSync

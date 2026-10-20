@@ -24,6 +24,8 @@ Scripts/install.sh
 
 Das Skript erzeugt das Xcode-Projekt, baut die App im Release-Modus, kopiert sie nach `~/Applications`, aktiviert die Finder-Erweiterung und startet den Finder neu. Falls das Menü nicht erscheint: Menüleisten-Symbol → *Finder-Erweiterung verwalten …* und dort einschalten.
 
+Release-ZIP zum Weitergeben (ohne Entwicklerzertifikat, für GitHub Releases): `Scripts/make_release.sh` → `dist/`.
+
 Zum Entwickeln: `xcodegen generate` ausführen, dann `NewFileForMac.xcodeproj` öffnen. **Das `.xcodeproj` nie von Hand ändern** – alle Einstellungen stehen in [project.yml](project.yml).
 
 ## Architektur
@@ -111,3 +113,9 @@ Läuft die App zusätzlich aus Xcode (DerivedData), gibt es zwei Kopien mit ders
 - Fortschrittsanzeige für lange Videokonvertierungen (ffmpeg `-progress`)
 - Eigenes ImageIO-Werkzeug in Swift statt `sips` (z. B. Größe ändern)
 - Markdown → PDF (pandoc + LaTeX-Engine, oder über HTML)
+
+## Lizenz
+
+[MIT](LICENSE) – frei nutzbar, veränderbar und weitergebbar, **ohne Gewähr**. Die Werkzeuge ffmpeg, pandoc, cwebp und LibreOffice werden nur aufgerufen, nicht mitgeliefert. Sie stehen unter ihren eigenen Lizenzen.
+
+„Mac“, „macOS“ und „Finder“ sind Marken von Apple Inc. Dieses Projekt steht in keiner Verbindung zu Apple.

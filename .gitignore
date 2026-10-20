@@ -4,3 +4,5 @@ DerivedData/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 .DS_Store
 NewFileForMac.xcodeproj/
+build-release/
+dist/

@@ -10,6 +10,8 @@ Windows-ähnliche Finder-Funktionen per Rechtsklick:
   - Bilder (inkl. HEIC, RAW) → JPEG, PNG, HEIC, WebP, AVIF, PDF, TIFF, GIF, BMP, ICO, PSD
   - Video → MP4, MOV, MKV, WebM, GIF, Audio-Spur, Standbild · Audio → MP3, M4A, WAV, AIFF, FLAC, Opus, OGG
 
+Produktseite: [website/](website/README.md)
+
 ## Installieren
 
 ```bash
